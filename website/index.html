@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anveshak Battery Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&family=Fira+Code:wght@400;500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon"></div>
+    <div>
+      <div class="logo-text"> TEAM ANVESHAK</div>
+      <div class="logo-sub">Battery Calculator</div>
+    </div>
+  </div>
+</header>
+
+<nav class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab(0)">01. TEMP RISE</button>
+  <button class="tab-btn" onclick="switchTab(1)">02. SIZING</button>
+  <button class="tab-btn" onclick="switchTab(2)">03. PACK DESIGN</button>
+</nav>
+
+<main>
+  <!-- ==========================================
+       TAB 01: TEMP RISE
+       ========================================== -->
+  <div class="tab-panel active" id="tab0">
+    <div class="split-layout">
+      
+      <section class="column input-column">
+        <div class="section-label">Input Parameters<br><span>define conductor geometry and operating conditions</span></div>
+        
+        <div class="card input-card">
+          <div class="card-title">// Environment</div>
+          <div class="field-group">
+            <label class="field-label">Ambient Temp (T_amb)</label>
+            <div class="field-wrap">
+              <input type="number" id="t1-ambient" value="25" oninput="updateTab1()">
+              <span class="field-unit">°C</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Material</div>
+          <div class="field-group">
+            <label class="field-label">Conductor Material</label>
+            <select id="t1-material" onchange="updateTab1()">
+              <option value="nickel">Nickel (Ni) — ρ ≈ 0.0699 mΩ·mm²/mm</option>
+              <option value="copper">Copper (Cu) — ρ ≈ 0.0172 mΩ·mm²/mm</option>
+              <option value="aluminum">Aluminum (Al) — ρ ≈ 0.0265 mΩ·mm²/mm</option>
+            </select>
+          </div>
+          <div class="res-display">
+            <div class="res-label">Resistivity at <span id="t1-temp-ref">25</span>°C</div>
+            <div class="res-value"><span id="t1-rho-val">0.0699</span> <span class="unit">mΩ·mm</span></div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Geometry</div>
+          <div class="field-group">
+            <label class="field-label">Thickness</label>
+            <div class="input-unit-wrap">
+              <input type="number" id="t1-thickness" value="0.15" step="0.01" oninput="updateTab1()">
+              <select id="t1-t-unit" onchange="updateTab1()">
+                <option value="1">mm</option>
+                <option value="10">cm</option>
+                <option value="1000">m</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Width</label>
+            <div class="input-unit-wrap">
+              <input type="number" id="t1-width" value="10" step="1" oninput="updateTab1()">
+              <select id="t1-w-unit" onchange="updateTab1()">
+                <option value="1">mm</option>
+                <option value="10">cm</option>
+                <option value="1000">m</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Length</label>
+            <div class="input-unit-wrap">
+              <input type="number" id="t1-length" value="30" step="1" oninput="updateTab1()">
+              <select id="t1-l-unit" onchange="updateTab1()">
+                <option value="1">mm</option>
+                <option value="10">cm</option>
+                <option value="1000">m</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Operating Conditions</div>
+          <div class="field-group">
+            <label class="field-label">Current</label>
+            <div class="field-wrap"><input type="number" id="t1-current" value="35" oninput="updateTab1()"><span class="field-unit">A</span></div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Strips (P)</label>
+              <div class="field-wrap"><input type="number" id="t1-strips" value="1" min="1" oninput="updateTab1()"><span class="field-unit">×</span></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Thermal Limit</label>
+              <div class="field-wrap"><input type="number" id="t1-maxtemp" value="65" oninput="updateTab1()"><span class="field-unit">°C</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="column output-column">
+        <div class="section-label">Computed Results<br><span>derived from conductor model — R = ρL/A, P = I²R, ΔT = P/(h·A_surf)</span></div>
+        
+        <div class="card output-card">
+          <div class="card-title">// Geometry</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Cross-Section Area</div>
+              <div class="metric-value green" id="t1-out-csa">—</div>
+              <div class="metric-unit">mm²</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Surface Area</div>
+              <div class="metric-value green" id="t1-out-sa">—</div>
+              <div class="metric-unit">mm²</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-title">// Electrical</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Resistance</div>
+              <div class="metric-value" id="t1-out-r">—</div>
+              <div class="metric-unit">mΩ</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Current / Strip</div>
+              <div class="metric-value" id="t1-out-istrip">—</div>
+              <div class="metric-unit">A</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-title">// Thermal</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Power Dissipated</div>
+              <div class="metric-value thermal" id="t1-out-p">—</div>
+              <div class="metric-unit">W</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Temp Rise ΔT</div>
+              <div class="metric-value thermal" id="t1-out-dt">—</div>
+              <div class="metric-unit">°C</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card highlight-card" id="t1-final-card">
+          <div class="main-result">
+            <div class="metric-label" style="font-size: 16px; margin-bottom: 10px; color: #fff;">Final Temperature</div>
+            <div class="metric-value highlight-tf" id="t1-out-tf">—</div>
+            <div class="metric-unit" style="font-size: 20px; color: #fff; font-weight: bold;">°C</div>
+          </div>
+          <div class="status-box" id="t1-status-box">
+            <div class="status-line" id="t1-status-state">Status: —</div>
+            <div class="status-line" id="t1-status-margin">Margin: —</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       TAB 02: CONDUCTOR SIZING
+       ========================================== -->
+  <div class="tab-panel" id="tab1">
+    <div class="split-layout">
+      
+      <section class="column input-column">
+        <div class="section-label">Sizing Constraints<br><span>set current + temp limit → find minimum conductor width</span></div>
+        
+        <div class="card input-card">
+          <div class="card-title">// Environment</div>
+          <div class="field-group">
+            <label class="field-label">Ambient Temp (T_amb)</label>
+            <div class="field-wrap">
+              <input type="number" id="t2-ambient" value="40" oninput="updateTab2()">
+              <span class="field-unit">°C</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Material</div>
+          <div class="field-group">
+            <label class="field-label">Conductor Material</label>
+            <select id="t2-material" onchange="updateTab2()">
+              <option value="nickel">Nickel (Ni)</option>
+              <option value="copper" selected>Copper (Cu)</option>
+              <option value="aluminum">Aluminum (Al)</option>
+            </select>
+          </div>
+          <div class="res-display">
+            <div class="res-label">Resistivity at <span id="t2-temp-ref">40</span>°C</div>
+            <div class="res-value"><span id="t2-rho-val">0.01815</span> <span class="unit">mΩ·mm</span></div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Fixed Geometry</div>
+          <div class="field-group">
+            <label class="field-label">Thickness (Fixed)</label>
+            <div class="input-unit-wrap">
+              <input type="number" id="t2-thickness" value="0.15" step="0.01" oninput="updateTab2()">
+              <select id="t2-t-unit" onchange="updateTab2()">
+                <option value="1">mm</option>
+                <option value="10">cm</option>
+                <option value="1000">m</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group">
+            <label class="field-label">Length</label>
+            <div class="input-unit-wrap">
+              <input type="number" id="t2-length" value="30" step="1" oninput="updateTab2()">
+              <select id="t2-l-unit" onchange="updateTab2()">
+                <option value="1">mm</option>
+                <option value="10">cm</option>
+                <option value="1000">m</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Operating Requirements</div>
+          <div class="field-group">
+            <label class="field-label">Required Current</label>
+            <div class="field-wrap"><input type="number" id="t2-current" value="100" oninput="updateTab2()"><span class="field-unit">A</span></div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Strips (P)</label>
+              <div class="field-wrap"><input type="number" id="t2-strips" value="1" min="1" oninput="updateTab2()"><span class="field-unit">×</span></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Max Allowed Temp</label>
+              <div class="field-wrap"><input type="number" id="t2-maxtemp" value="60" oninput="updateTab2()"><span class="field-unit">°C</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="column output-column">
+        <div class="section-label">Sizing Result<br><span>iterative solve for minimum width satisfying temp constraint</span></div>
+        
+        <div class="card output-card highlight-card status-safe" id="t2-final-card" style="margin-bottom: 20px;">
+          <div class="main-result">
+            <div class="metric-label" style="font-size: 16px; margin-bottom: 10px; color: #fff;">Minimum Width Required</div>
+            <div class="metric-value highlight-tf" id="t2-out-width">—</div>
+            <div class="metric-unit" style="font-size: 20px; color: #fff; font-weight: bold;">mm</div>
+            <div style="font-size: 11px; color: var(--text-dim); margin-top: 5px;">(Rounded up to nearest 0.5)</div>
+          </div>
+          <div class="status-box" id="t2-status-box">
+            <div class="status-line" id="t2-status-state">Status: —</div>
+            <div class="status-line" id="t2-status-margin">Margin: —</div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-title">// Metrics at Minimum Width</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Cross-Section Area</div>
+              <div class="metric-value green" id="t2-out-csa">—</div>
+              <div class="metric-unit">mm²</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Resistance</div>
+              <div class="metric-value" id="t2-out-r">—</div>
+              <div class="metric-unit">mΩ</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Power Dissipated</div>
+              <div class="metric-value thermal" id="t2-out-p">—</div>
+              <div class="metric-unit">W</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Temp Rise ΔT</div>
+              <div class="metric-value thermal" id="t2-out-dt">—</div>
+              <div class="metric-unit">°C</div>
+            </div>
+            <div class="metric-card" style="grid-column: span 2;">
+              <div class="metric-label">Actual Final Temp</div>
+              <div class="metric-value" style="color: #fff;" id="t2-out-tf">—</div>
+              <div class="metric-unit">°C</div>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       TAB 03: PACK DESIGN
+       ========================================== -->
+  <div class="tab-panel" id="tab2">
+    <div class="split-layout">
+      
+      <section class="column input-column">
+        <div class="section-label">Cell & Pack Parameters<br><span>define cell chemistry and series × parallel topology</span></div>
+        
+        <div class="card input-card">
+          <div class="card-title">// Cell Chemistry</div>
+          <div class="cell-preset-bar">
+            <button class="preset-btn active" onclick="setPreset(event, 'LFP')">LFP</button>
+            <button class="preset-btn" onclick="setPreset(event, 'NMC')">NMC</button>
+            <button class="preset-btn" onclick="setPreset(event, 'LTO')">LTO</button>
+            <button class="preset-btn" onclick="setPreset(event, 'NCA')">NCA</button>
+            <button class="preset-btn" onclick="setPreset(event, 'custom')">CUSTOM</button>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Nominal Voltage</label>
+              <div class="field-wrap"><input type="number" id="p-vnom" value="3.2" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Cell Capacity</label>
+              <div class="field-wrap"><input type="number" id="p-cap" value="50" step="0.1" oninput="updateTab3()"><span class="field-unit">Ah</span></div>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Max Voltage</label>
+              <div class="field-wrap"><input type="number" id="p-vmax" value="3.65" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Min Voltage</label>
+              <div class="field-wrap"><input type="number" id="p-vmin" value="2.5" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Pack Topology</div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Series (S)</label>
+              <div class="field-wrap"><input type="number" id="p-series" value="16" min="1" oninput="updateTopologyViz()"><span class="field-unit">S</span></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Parallel (P)</label>
+              <div class="field-wrap"><input type="number" id="p-parallel" value="1" min="1" oninput="updateTopologyViz()"><span class="field-unit">P</span></div>
+            </div>
+          </div>
+          <div class="topology-viz" id="topology-viz"></div>
+          <div class="pack-label" id="topology-label">16S1P</div>
+        </div>
+      </section>
+
+      <section class="column output-column">
+        <div class="section-label">Pack Energy Results<br><span>energy calculations based on cell voltages × capacity</span></div>
+        
+        <div class="card output-card">
+          <div class="card-title">// Pack Voltages</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Pack Nominal</div>
+              <div class="metric-value green" id="p-out-vnom">—</div>
+              <div class="metric-unit">V</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Pack Capacity</div>
+              <div class="metric-value" id="p-out-cap">—</div>
+              <div class="metric-unit">Ah</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Pack Max</div>
+              <div class="metric-value" id="p-out-vmax">—</div>
+              <div class="metric-unit">V</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Pack Min</div>
+              <div class="metric-value thermal" id="p-out-vmin">—</div>
+              <div class="metric-unit">V</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-title">// Energy Overview</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Total Energy</div>
+              <div class="metric-value green" id="p-out-etotal">—</div>
+              <div class="metric-unit">Wh</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Usable Energy</div>
+              <div class="metric-value highlight-tf" style="font-size: 32px;" id="p-out-eusable">—</div>
+              <div class="metric-unit">Wh</div>
+            </div>
+          </div>
+
+          <div class="energy-bar-wrap" id="energy-bar-wrap">
+            <div class="energy-bar-label">
+              <span>0 Wh</span>
+              <span id="bar-label-usable">Usable</span>
+              <span id="bar-label-total">Total</span>
+            </div>
+            <div class="energy-bar" style="margin-bottom:8px;">
+              <div class="energy-fill" id="bar-total" style="width:100%;"></div>
+            </div>
+            <div class="energy-bar">
+              <div class="energy-fill usable" id="bar-usable"></div>
+            </div>
+            <div class="energy-bar-label" style="margin-top:8px;">
+              <span style="color:var(--text-dim);">Total capacity</span>
+              <span style="color:var(--accent-blue);" id="bar-pct">—</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
