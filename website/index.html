@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anveshak Battery Calculator</title>
+  <!-- Favicon link -->
+  <link rel="icon" type="image/png" href="TeamAnveshakLogo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700;800&family=Fira+Code:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
@@ -12,9 +14,9 @@
 
 <header>
   <div class="logo">
-    <div class="logo-icon"></div>
+    <img src="TeamAnveshakLogo.png" alt="" class="logo-img">
     <div>
-      <div class="logo-text"> TEAM ANVESHAK</div>
+      <div class="logo-text">TEAM ANVESHAK</div>
       <div class="logo-sub">Battery Calculator</div>
     </div>
   </div>
@@ -361,16 +363,16 @@
           <div class="card-title">// Pack Topology</div>
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label">Series (S)</label>
-              <div class="field-wrap"><input type="number" id="p-series" value="16" min="1" oninput="updateTopologyViz()"><span class="field-unit">S</span></div>
+              <label class="field-label">Series (S) Columns</label>
+              <div class="field-wrap"><input type="number" id="p-series" value="6" min="1" oninput="updateTopologyViz()"><span class="field-unit">S</span></div>
             </div>
             <div class="field-group">
-              <label class="field-label">Parallel (P)</label>
-              <div class="field-wrap"><input type="number" id="p-parallel" value="1" min="1" oninput="updateTopologyViz()"><span class="field-unit">P</span></div>
+              <label class="field-label">Parallel (P) Rows</label>
+              <div class="field-wrap"><input type="number" id="p-parallel" value="8" min="1" oninput="updateTopologyViz()"><span class="field-unit">P</span></div>
             </div>
           </div>
           <div class="topology-viz" id="topology-viz"></div>
-          <div class="pack-label" id="topology-label">16S1P</div>
+          <div class="pack-label" id="topology-label">6S8P</div>
         </div>
       </section>
 
