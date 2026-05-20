@@ -57,7 +57,6 @@ header {
 .logo-img { height: 52px; width: auto; }
 .logo-text { font-size: 20px; font-weight: 800; color: var(--accent); letter-spacing: 2px; text-shadow: 0 0 8px var(--accent-glow); }
 .logo-sub { font-size: 12px; color: var(--accent-silver); font-weight: 600; letter-spacing: 1px; }
-.header-meta { font-size: 11px; color: var(--accent-silver); font-weight: bold; }
 
 .tab-bar { display: flex; gap: 20px; padding: 0 40px; border-bottom: 1px solid var(--border); background: rgba(3, 3, 5, 0.85); backdrop-filter: blur(8px); }
 .tab-btn { 
@@ -255,6 +254,30 @@ input:focus, select:focus {
 .pack-label { text-align: center; font-size: 14px; font-weight: bold; color: var(--accent); margin-top: 15px; font-family: var(--fira); letter-spacing: 2px; text-shadow: 0 0 8px var(--accent-glow); }
 
 .energy-bar-wrap { margin-top: 30px; background: rgba(0,0,0,0.5); padding: 24px; border: 1px solid var(--border); border-radius: 3px; display: none; }
+
+.field-hint {
+  font-size: 11px; color: var(--text-comment); margin-top: 10px; line-height: 1.5;
+  border-left: 2px solid var(--border); padding-left: 8px;
+}
+
+.topo-legend {
+  display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 16px;
+}
+.legend-item {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 11px; color: var(--text-dim); font-weight: 600; letter-spacing: 0.5px;
+}
+.legend-swatch {
+  width: 20px; height: 8px; border-radius: 2px; display: inline-block;
+}
+
+.topology-svg-wrap {
+  background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+  border-radius: 3px; padding: 16px; overflow: auto;
+  min-height: 300px; display: flex; align-items: center; justify-content: center;
+}
+
+#pack-dims-card { margin-top: 0; }
 .energy-bar-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-dim); margin-bottom: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
 .energy-bar { height: 16px; background: #111; border: 1px solid var(--border); margin-bottom: 12px; border-radius: 2px; overflow: hidden; }
 .energy-fill { height: 100%; background: var(--border-hover); transition: width 0.4s ease; }

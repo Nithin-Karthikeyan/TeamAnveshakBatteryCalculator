@@ -7,14 +7,6 @@ const MAT_PROPS = {
     aluminum: { rho20: 0.0265, alpha: 0.00429 }
 };
 
-const CHEMISTRY_PRESETS = {
-    LFP:  { vmax: 3.65, vnom: 3.2,  vmin: 2.5  },
-    NMC:  { vmax: 4.2,  vnom: 3.6,  vmin: 2.8  },
-    LTO:  { vmax: 2.85, vnom: 2.3,  vmin: 1.8  },
-    NCA:  { vmax: 4.2,  vnom: 3.6,  vmin: 2.7  },
-    custom: null
-};
-
 // --- CORE UTILS ---
 
 function fmt(v, dec = 4) {
@@ -199,21 +191,10 @@ function updateTab2() {
 
 // --- TAB 3: PACK DESIGN (Live Update) ---
 
-function setPreset(e, name) {
-    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-    if (e) e.target.classList.add('active');
-    
-    if (name !== 'custom' && CHEMISTRY_PRESETS[name]) {
-        const setVal = (id, val) => {
-            const el = document.getElementById(id);
-            if(el) el.value = val;
-        };
-        setVal('p-vmax', CHEMISTRY_PRESETS[name].vmax);
-        setVal('p-vnom', CHEMISTRY_PRESETS[name].vnom);
-        setVal('p-vmin', CHEMISTRY_PRESETS[name].vmin);
-    }
-    updateTab3();
-}
+const CELL_FORMS = {
+    '21700': { dia: 21, length: 70 },
+    '18650': { dia: 18, length: 65 }
+};
 
 function updateTopologyViz() {
     const sEl = document.getElementById('p-series');
@@ -221,30 +202,152 @@ function updateTopologyViz() {
 
     const S = parseInt(sEl.value) || 1;
     const P = parseInt(document.getElementById('p-parallel')?.value) || 1;
-    const viz = document.getElementById('topology-viz');
+    const formKey = document.getElementById('p-cell-form')?.value || '21700';
+    const gapX = parseFloat(document.getElementById('p-gap-x')?.value) || 0;
+    const gapY = parseFloat(document.getElementById('p-gap-y')?.value) || 0;
+    const cellForm = CELL_FORMS[formKey];
+
+    // Update label
     const label = document.getElementById('topology-label');
-    
     if (label) label.textContent = `${S}S${P}P — ${S * P} cells total`;
-    const maxShow = 60;
-    const totalCells = S * P;
-    
-    if (viz) {
-        viz.innerHTML = '';
-        if (totalCells > maxShow) {
-            viz.innerHTML = `<div style="color:var(--text3);font-size:11px;letter-spacing:1px;">${S}S${P}P — ${totalCells} cells (too many to render)</div>`;
-        } else {
-            for (let s = 0; s < S; s++) {
-                const grp = document.createElement('div');
-                grp.className = 'series-group';
-                for (let p = 0; p < P; p++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'cell-block';
-                    grp.appendChild(cell);
-                }
-                viz.appendChild(grp);
+
+    // Pack dimensions output
+    const pitch_x = cellForm.dia + gapX;  // center-to-center spacing S direction
+    const pitch_y = cellForm.dia + gapY;  // center-to-center spacing P direction
+    const packW = S * pitch_x - gapX;     // outer edge to outer edge
+    const packH = P * pitch_y - gapY;
+
+    const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+    setEl('p-out-width', packW.toFixed(1));
+    setEl('p-out-height', packH.toFixed(1));
+    setEl('p-out-celllength', cellForm.length);
+    setEl('p-out-totalcells', S * P);
+
+    // --- SVG RENDER ---
+    const svg = document.getElementById('topology-svg');
+    if (!svg) return;
+    svg.innerHTML = '';
+
+    // Scale up cells to fill space better
+    const SCALE = 3.2;
+    const CELL_R = (cellForm.dia / 2) * SCALE;
+    const PX = pitch_x * SCALE;
+    const PY = pitch_y * SCALE;
+
+    const MARGIN_LEFT = 36;
+    const MARGIN_TOP  = 22;
+    const MARGIN_BOT  = 32;
+    const MARGIN_RIGHT = 16;
+
+    const totalW = MARGIN_LEFT + S * PX - (gapX * SCALE) + MARGIN_RIGHT;
+    const totalH = MARGIN_TOP + P * PY - (gapY * SCALE) + MARGIN_BOT;
+
+    svg.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
+    svg.setAttribute('height', Math.min(totalH, 520)); // cap height, scroll if huge
+
+    const C_RED    = '#ff2244';
+    const C_BLUE   = '#00aaff';
+    const C_PURPLE = '#9b59ff';
+    const C_CELL   = 'rgba(12,14,18,0.95)';
+    const C_BORDER = 'rgba(255,51,0,0.6)';
+    const C_POS    = '#ee6829';
+    const C_NEG    = '#ffffff';
+    const C_LABEL  = '#94a3b8';
+
+    const STRIP_W   = CELL_R * 0.40;   // thicker
+    const STRIP_EXT = CELL_R * 0.25;
+    const BRIDGE_H  = STRIP_W * 0.9;
+
+    const cx = s => MARGIN_LEFT + s * PX + CELL_R;
+    const cy = p => MARGIN_TOP  + p * PY + CELL_R;
+
+    const ns = 'http://www.w3.org/2000/svg';
+    const mkRect = (x, y, w, h, fill, opacity, rx = 2) => {
+        const r = document.createElementNS(ns, 'rect');
+        r.setAttribute('x', x); r.setAttribute('y', y);
+        r.setAttribute('width', w); r.setAttribute('height', h);
+        r.setAttribute('fill', fill); r.setAttribute('opacity', opacity);
+        r.setAttribute('rx', rx);
+        return r;
+    };
+    const mkCircle = (x, y, r, fill, opacity = 1, stroke = null, sw = 0) => {
+        const c = document.createElementNS(ns, 'circle');
+        c.setAttribute('cx', x); c.setAttribute('cy', y);
+        c.setAttribute('r', r); c.setAttribute('fill', fill);
+        c.setAttribute('opacity', opacity);
+        if (stroke) { c.setAttribute('stroke', stroke); c.setAttribute('stroke-width', sw); }
+        return c;
+    };
+    const mkText = (x, y, txt, fill, size, weight, anchor = 'middle') => {
+        const t = document.createElementNS(ns, 'text');
+        t.setAttribute('x', x); t.setAttribute('y', y);
+        t.setAttribute('text-anchor', anchor);
+        t.setAttribute('font-size', size);
+        t.setAttribute('font-family', 'JetBrains Mono, monospace');
+        t.setAttribute('font-weight', weight);
+        t.setAttribute('fill', fill);
+        t.setAttribute('dominant-baseline', 'middle');
+        t.textContent = txt;
+        return t;
+    };
+
+    // --- 1. PURPLE VERTICAL STRIPS through every group ---
+    for (let s = 0; s < S; s++) {
+        const x = cx(s);
+        const stripTop = cy(0) - CELL_R - STRIP_EXT;
+        const stripH   = (cy(P-1) + CELL_R + STRIP_EXT) - stripTop;
+        svg.appendChild(mkRect(x - STRIP_W/2, stripTop, STRIP_W, stripH, C_PURPLE, '0.85'));
+    }
+
+    // --- 2. CELLS (drawn before bridges so bridges appear on top) ---
+    for (let s = 0; s < S; s++) {
+        for (let p = 0; p < P; p++) {
+            const x = cx(s), y = cy(p);
+            // C1 (s=0) = B-, so s=0 has neg tab up (posOnTop = false for s=0)
+            // Clast = B+, so last group has pos tab up
+            const posOnTop = (s % 2 !== 0);  // flipped vs before
+
+            svg.appendChild(mkCircle(x, y, CELL_R, C_CELL, 1, C_BORDER, 1.8));
+
+            if (posOnTop) {
+                svg.appendChild(mkCircle(x, y, CELL_R * 0.65, 'none', 1, C_POS, 2.0));
+                svg.appendChild(mkCircle(x, y, CELL_R * 0.65, C_POS, 0.12));
+            } else {
+                svg.appendChild(mkCircle(x, y, CELL_R * 0.80, 'none', 1, C_NEG, 1.5));
+                svg.appendChild(mkCircle(x, y, CELL_R * 0.80, C_NEG, 0.08));
             }
         }
     }
+
+    // --- 3. HORIZONTAL BRIDGES (drawn on top of cells) ---
+    // C1=B-, Clast=B+
+    // s=0→1: C1(neg up) connects to C2(pos up) → bridge on BOTTOM (blue, neg side of C1)
+    // s=1→2: C2(pos up) to C3(neg up) → bridge on TOP (red, pos side of C2)
+    // alternates: s even → blue (bottom), s odd → red (top)
+    for (let s = 0; s < S - 1; s++) {
+        const x1 = cx(s)   + STRIP_W / 2;
+        const x2 = cx(s+1) - STRIP_W / 2;
+        const bW  = Math.max(x2 - x1, 1);
+        const isTop = (s % 2 !== 0);   // flipped: odd s → top (red), even s → bottom (blue)
+        const color = isTop ? C_RED : C_BLUE;
+        for (let p = 0; p < P; p++) {
+            const yConn = isTop
+                ? cy(p) - CELL_R * 0.42 - BRIDGE_H / 2
+                : cy(p) + CELL_R * 0.42 - BRIDGE_H / 2;
+            svg.appendChild(mkRect(x1, yConn, bW, BRIDGE_H, color, '0.88', 1));
+        }
+    }
+
+    // --- 4. GROUP LABELS (C1..Cn) ---
+    for (let s = 0; s < S; s++) {
+        svg.appendChild(mkText(cx(s), MARGIN_TOP - 10, `C${s+1}`, C_LABEL, Math.max(9, CELL_R * 0.42), '700'));
+    }
+
+    // --- 5. B- at C1, B+ at Clast ---
+    const termY = totalH - 8;
+    svg.appendChild(mkText(cx(0),   termY, 'B−', C_BLUE, Math.max(10, CELL_R * 0.45), '800'));
+    svg.appendChild(mkText(cx(S-1), termY, 'B+', C_RED,  Math.max(10, CELL_R * 0.45), '800'));
+
     updateTab3();
 }
 
@@ -252,43 +355,51 @@ function updateTab3() {
     const vmax = parseFloat(document.getElementById('p-vmax')?.value) || 0;
     const vnom = parseFloat(document.getElementById('p-vnom')?.value) || 0;
     const vmin = parseFloat(document.getElementById('p-vmin')?.value) || 0;
-    const cap = parseFloat(document.getElementById('p-cap')?.value) || 0;
-    const S = parseInt(document.getElementById('p-series')?.value) || 1;
-    const P = parseInt(document.getElementById('p-parallel')?.value) || 1;
+    const cap  = parseFloat(document.getElementById('p-cap')?.value)  || 0;
+    const S    = parseInt(document.getElementById('p-series')?.value)   || 0;
+    const P    = parseInt(document.getElementById('p-parallel')?.value) || 0;
+
+    const dash = (id) => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = '—'; el.style.color = 'var(--danger)'; }
+    };
+    const setVal = (id, val, dec) => {
+        const el = document.getElementById(id);
+        if (el) { el.textContent = fmt(val, dec); el.style.color = ''; }
+    };
+
+    // Validate
+    const invalid = vnom <= 0 || cap <= 0 || S <= 0 || P <= 0 || vmax <= 0 || vmin <= 0 || vmax <= vmin;
+    if (invalid) {
+        ['p-out-vnom','p-out-vmax','p-out-vmin','p-out-cap','p-out-etotal','p-out-eusable'].forEach(dash);
+        const wrap = document.getElementById('energy-bar-wrap');
+        if (wrap) wrap.style.display = 'none';
+        return;
+    }
 
     const pack_vnom = vnom * S;
     const pack_vmax = vmax * S;
     const pack_vmin = vmin * S;
-    const pack_cap = cap * P;
+    const pack_cap  = cap * P;
+    const E_total   = pack_vnom * pack_cap;
+    const E_usable  = (vmax - vmin) * cap * P * S;
+    const pct       = E_total > 0 ? (E_usable / E_total) * 100 : 0;
 
-    const E_total = pack_vnom * pack_cap;
-    const E_usable = (vmax - vmin) * cap * P * S;
-    const pct = E_total > 0 ? (E_usable / E_total) * 100 : 0;
-
-    const checkAndSet = (id, val, dec) => {
-        const el = document.getElementById(id);
-        if (el) el.textContent = fmt(val, dec);
-    };
-
-    checkAndSet('p-out-vnom', pack_vnom, 2);
-    checkAndSet('p-out-vmax', pack_vmax, 2);
-    checkAndSet('p-out-vmin', pack_vmin, 2);
-    checkAndSet('p-out-cap', pack_cap, 2);
-    checkAndSet('p-out-etotal', E_total, 1);
-    checkAndSet('p-out-eusable', E_usable, 1);
+    setVal('p-out-vnom', pack_vnom, 2);
+    setVal('p-out-vmax', pack_vmax, 2);
+    setVal('p-out-vmin', pack_vmin, 2);
+    setVal('p-out-cap',  pack_cap,  2);
+    setVal('p-out-etotal',  E_total,  1);
+    setVal('p-out-eusable', E_usable, 1);
 
     const wrap = document.getElementById('energy-bar-wrap');
     if (wrap) wrap.style.display = 'block';
-    
     const barUsable = document.getElementById('bar-usable');
     if (barUsable) barUsable.style.width = pct + '%';
-    
     const lblUsable = document.getElementById('bar-label-usable');
     if (lblUsable) lblUsable.textContent = `Usable: ${fmt(E_usable, 1)} Wh`;
-    
     const lblTotal = document.getElementById('bar-label-total');
     if (lblTotal) lblTotal.textContent = `Total: ${fmt(E_total, 1)} Wh`;
-    
     const barPct = document.getElementById('bar-pct');
     if (barPct) barPct.textContent = fmt(pct, 1) + '% usable';
 }

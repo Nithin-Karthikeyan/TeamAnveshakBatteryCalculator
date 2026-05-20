@@ -329,32 +329,25 @@
         <div class="section-label">Cell & Pack Parameters<br><span>define cell chemistry and series × parallel topology</span></div>
         
         <div class="card input-card">
-          <div class="card-title">// Cell Chemistry</div>
-          <div class="cell-preset-bar">
-            <button class="preset-btn active" onclick="setPreset(event, 'LFP')">LFP</button>
-            <button class="preset-btn" onclick="setPreset(event, 'NMC')">NMC</button>
-            <button class="preset-btn" onclick="setPreset(event, 'LTO')">LTO</button>
-            <button class="preset-btn" onclick="setPreset(event, 'NCA')">NCA</button>
-            <button class="preset-btn" onclick="setPreset(event, 'custom')">CUSTOM</button>
-          </div>
+          <div class="card-title">// Cell Specs</div>
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Nominal Voltage</label>
-              <div class="field-wrap"><input type="number" id="p-vnom" value="3.2" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+              <div class="field-wrap"><input type="number" id="p-vnom" value="3.7" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Cell Capacity</label>
-              <div class="field-wrap"><input type="number" id="p-cap" value="50" step="0.1" oninput="updateTab3()"><span class="field-unit">Ah</span></div>
+              <div class="field-wrap"><input type="number" id="p-cap" value="4.2" step="0.1" oninput="updateTab3()"><span class="field-unit">Ah</span></div>
             </div>
           </div>
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Max Voltage</label>
-              <div class="field-wrap"><input type="number" id="p-vmax" value="3.65" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+              <div class="field-wrap"><input type="number" id="p-vmax" value="4.2" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Min Voltage</label>
-              <div class="field-wrap"><input type="number" id="p-vmin" value="2.5" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+              <div class="field-wrap"><input type="number" id="p-vmin" value="3.6" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
             </div>
           </div>
         </div>
@@ -363,21 +356,84 @@
           <div class="card-title">// Pack Topology</div>
           <div class="field-row">
             <div class="field-group">
-              <label class="field-label">Series (S) Columns</label>
+              <label class="field-label">Series (S)</label>
               <div class="field-wrap"><input type="number" id="p-series" value="6" min="1" oninput="updateTopologyViz()"><span class="field-unit">S</span></div>
             </div>
             <div class="field-group">
-              <label class="field-label">Parallel (P) Rows</label>
+              <label class="field-label">Parallel (P)</label>
               <div class="field-wrap"><input type="number" id="p-parallel" value="8" min="1" oninput="updateTopologyViz()"><span class="field-unit">P</span></div>
             </div>
           </div>
-          <div class="topology-viz" id="topology-viz"></div>
-          <div class="pack-label" id="topology-label">6S8P</div>
+        </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Cell Form Factor & Spacing</div>
+          <div class="field-group">
+            <label class="field-label">Cell Form Factor</label>
+            <select id="p-cell-form" onchange="updateTopologyViz()">
+              <option value="21700">INR21700 — ⌀21mm × 70mm</option>
+              <option value="18650">INR18650 — ⌀18mm × 65mm</option>
+            </select>
+          </div>
+          <div class="field-row">
+            <div class="field-group">
+              <label class="field-label">Gap X (between cols)</label>
+              <div class="field-wrap"><input type="number" id="p-gap-x" value="3" min="0" step="0.5" oninput="updateTopologyViz()"><span class="field-unit">mm</span></div>
+            </div>
+            <div class="field-group">
+              <label class="field-label">Gap Y (between rows)</label>
+              <div class="field-wrap"><input type="number" id="p-gap-y" value="3" min="0" step="0.5" oninput="updateTopologyViz()"><span class="field-unit">mm</span></div>
+            </div>
+          </div>
+          <div class="field-hint">Gap = cell holder wall thickness / spacing between cell centers minus cell diameter</div>
+        </div>
+
+        <div class="card input-card" id="pack-dims-card">
+          <div class="card-title">// Pack Dimensions</div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Pack Width</div>
+              <div class="metric-value green" id="p-out-width">—</div>
+              <div class="metric-unit">mm (S-axis)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Pack Height</div>
+              <div class="metric-value green" id="p-out-height">—</div>
+              <div class="metric-unit">mm (P-axis)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Cell Length</div>
+              <div class="metric-value" id="p-out-celllength">—</div>
+              <div class="metric-unit">mm (depth)</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Total Cells</div>
+              <div class="metric-value" id="p-out-totalcells">—</div>
+              <div class="metric-unit">cells</div>
+            </div>
+          </div>
         </div>
       </section>
 
       <section class="column output-column">
-        <div class="section-label">Pack Energy Results<br><span>energy calculations based on cell voltages × capacity</span></div>
+        <div class="section-label">Pack Topology<br><span>cell arrangement, strip connections, and terminal locations</span></div>
+
+        <div class="card output-card" style="margin-bottom:20px;">
+          <div class="card-title">// Wiring Diagram</div>
+          <div class="topo-legend">
+            <span class="legend-item"><span class="legend-swatch" style="background:#ff2244"></span>Red — connection on top side</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#00aaff"></span>Blue — connection on bottom side</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#9b59ff"></span>Purple — connected on both sides</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#ee6829;border-radius:50%"></span>Orange circle — positive tab</span>
+            <span class="legend-item"><span class="legend-swatch" style="background:#ffffff;border-radius:50%"></span>White circle — negative tab</span>
+          </div>
+          <div class="topology-svg-wrap" id="topology-svg-wrap">
+            <svg id="topology-svg" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <div class="pack-label" id="topology-label">—</div>
+        </div>
+
+        <div class="section-label" style="margin-top:10px;">Pack Energy Results<br><span>energy calculations based on cell voltages × capacity</span></div>
         
         <div class="card output-card">
           <div class="card-title">// Pack Voltages</div>
