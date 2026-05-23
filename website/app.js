@@ -234,9 +234,9 @@ function updateTopologyViz() {
     const PX = pitch_x * SCALE;
     const PY = pitch_y * SCALE;
 
-    const MARGIN_LEFT = 36;
-    const MARGIN_TOP  = 22;
-    const MARGIN_BOT  = 32;
+    const MARGIN_LEFT  = 70;   // room for Y arrow
+    const MARGIN_TOP   = 22;
+    const MARGIN_BOT   = 60;   // room for X arrow + B+/B- labels
     const MARGIN_RIGHT = 16;
 
     const totalW = MARGIN_LEFT + S * PX - (gapX * SCALE) + MARGIN_RIGHT;
@@ -344,9 +344,70 @@ function updateTopologyViz() {
     }
 
     // --- 5. B- at C1, B+ at Clast ---
-    const termY = totalH - 8;
+    const termY = totalH - MARGIN_BOT + 14;
     svg.appendChild(mkText(cx(0),   termY, 'B−', C_BLUE, Math.max(10, CELL_R * 0.45), '800'));
     svg.appendChild(mkText(cx(S-1), termY, 'B+', C_RED,  Math.max(10, CELL_R * 0.45), '800'));
+
+    // --- 6. DIMENSION ANNOTATIONS ---
+    const DIM_COLOR = '#94a3b8';
+    const DIM_SIZE  = Math.max(13, CELL_R * 0.52);
+    const TICK = 4;
+
+    // Pack bounding box edges in SVG coords
+    const packLeft   = cx(0)   - CELL_R;
+    const packRight  = cx(S-1) + CELL_R;
+    const packTop    = cy(0)   - CELL_R;
+    const packBottom = cy(P-1) + CELL_R;
+
+    // Helper: draw dimension line with ticks and label
+    const mkDimLine = (x1, y1, x2, y2, label, labelX, labelY, isVertical) => {
+        // Main line
+        const line = document.createElementNS(ns, 'line');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        line.setAttribute('stroke', DIM_COLOR); line.setAttribute('stroke-width', '1');
+        line.setAttribute('stroke-dasharray', '3,2');
+        svg.appendChild(line);
+
+        // Tick at start
+        const t1 = document.createElementNS(ns, 'line');
+        t1.setAttribute('x1', isVertical ? x1 - TICK : x1);
+        t1.setAttribute('y1', isVertical ? y1 : y1 - TICK);
+        t1.setAttribute('x2', isVertical ? x1 + TICK : x1);
+        t1.setAttribute('y2', isVertical ? y1 : y1 + TICK);
+        t1.setAttribute('stroke', DIM_COLOR); t1.setAttribute('stroke-width', '1.2');
+        svg.appendChild(t1);
+
+        // Tick at end
+        const t2 = document.createElementNS(ns, 'line');
+        t2.setAttribute('x1', isVertical ? x2 - TICK : x2);
+        t2.setAttribute('y1', isVertical ? y2 : y2 - TICK);
+        t2.setAttribute('x2', isVertical ? x2 + TICK : x2);
+        t2.setAttribute('y2', isVertical ? y2 : y2 + TICK);
+        t2.setAttribute('stroke', DIM_COLOR); t2.setAttribute('stroke-width', '1.2');
+        svg.appendChild(t2);
+
+        // Label
+        const txt = mkText(labelX, labelY, label, DIM_COLOR, DIM_SIZE, '600');
+        if (isVertical) {
+            txt.setAttribute('transform', `rotate(-90, ${labelX}, ${labelY})`);
+            txt.setAttribute('text-anchor', 'middle');
+        }
+        svg.appendChild(txt);
+    };
+
+    // X dimension (horizontal, below pack) — Length
+    const xArrowY = packBottom + 28;
+    mkDimLine(packLeft, xArrowY, packRight, xArrowY,
+        `X: ${packW.toFixed(1)} mm`, (packLeft + packRight) / 2, xArrowY + 11, false);
+
+    // Y dimension (vertical, left of pack) — Width
+    const yArrowX = packLeft - 38;
+    mkDimLine(yArrowX, packTop, yArrowX, packBottom,
+        `Y: ${packH.toFixed(1)} mm`, yArrowX - 18, (packTop + packBottom) / 2, true);
+
+    // Z label (bottom-left corner, static)
+    svg.appendChild(mkText(packLeft, totalH - 8, `Z: ${cellForm.length} mm`, DIM_COLOR, DIM_SIZE, '600', 'start'));
 
     updateTab3();
 }
