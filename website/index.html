@@ -419,8 +419,14 @@
         <div class="section-label">Pack Topology<br><span>cell arrangement, strip connections, and terminal locations</span></div>
 
         <div class="card output-card" style="margin-bottom:20px;">
-          <div class="card-title">// Wiring Diagram</div>
-          <div class="topo-legend">
+          <div class="card-title-row">
+            <span class="card-title">// Wiring Diagram</span>
+            <div class="view-toggle">
+              <button class="view-btn active" id="btn-2d" onclick="setTopoView('2d')">2D</button>
+              <button class="view-btn" id="btn-3d" onclick="setTopoView('3d')">3D</button>
+            </div>
+          </div>
+          <div class="topo-legend" id="topo-legend">
             <span class="legend-item"><span class="legend-swatch" style="background:#ff2244"></span>Red — connection on top side</span>
             <span class="legend-item"><span class="legend-swatch" style="background:#00aaff"></span>Blue — connection on bottom side</span>
             <span class="legend-item"><span class="legend-swatch" style="background:#9b59ff"></span>Purple — connected on both sides</span>
@@ -429,6 +435,9 @@
           </div>
           <div class="topology-svg-wrap" id="topology-svg-wrap">
             <svg id="topology-svg" width="100%" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <div class="topology-3d-wrap" id="topology-3d-wrap" style="display:none;">
+            <canvas id="topology-3d-canvas"></canvas>
           </div>
           <div class="pack-label" id="topology-label">—</div>
         </div>
@@ -501,6 +510,7 @@
 
 </main>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

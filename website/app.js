@@ -410,6 +410,10 @@ function updateTopologyViz() {
     svg.appendChild(mkText(packLeft, totalH - 8, `Z: ${cellForm.length} mm`, DIM_COLOR, DIM_SIZE, '600', 'start'));
 
     updateTab3();
+
+    // Rebuild 3D if active
+    const wrap3d = document.getElementById('topology-3d-wrap');
+    if (wrap3d && wrap3d.style.display !== 'none') rebuild3D();
 }
 
 function updateTab3() {
@@ -470,8 +474,307 @@ function switchTab(idx) {
     document.querySelectorAll('.tab-panel').forEach((p, i) => p.classList.toggle('active', i === idx));
 }
 
+// --- 3D VIEW ---
+let _3d = null; // lazy init container
+
+function setTopoView(mode) {
+    const btn2d = document.getElementById('btn-2d');
+    const btn3d = document.getElementById('btn-3d');
+    const wrap2d = document.getElementById('topology-svg-wrap');
+    const wrap3d = document.getElementById('topology-3d-wrap');
+    const legend = document.getElementById('topo-legend');
+
+    if (mode === '3d') {
+        btn2d.classList.remove('active'); btn3d.classList.add('active');
+        wrap2d.style.display = 'none'; wrap3d.style.display = 'block';
+        legend.style.display = 'none';
+        if (!_3d) init3D();
+        else rebuild3D();
+    } else {
+        btn2d.classList.add('active'); btn3d.classList.remove('active');
+        wrap2d.style.display = 'flex'; wrap3d.style.display = 'none';
+        legend.style.display = 'flex';
+        if (_3d) _3d.renderer.setAnimationLoop(null);
+    }
+}
+
+function init3D() {
+    const canvas = document.getElementById('topology-3d-canvas');
+    const wrap   = document.getElementById('topology-3d-wrap');
+    const W = wrap.clientWidth, H = wrap.clientHeight;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setSize(W, H);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setClearColor(0x000000, 0);
+
+    const scene  = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(45, W / H, 0.1, 5000);
+
+    // Orbit controls (manual, no import needed for r128)
+    let isDragging = false, isRightDrag = false;
+    let prevMouse = { x: 0, y: 0 };
+    let spherical = { theta: Math.PI / 6, phi: Math.PI / 3, r: 300 };
+    let target = new THREE.Vector3(0, 0, 0);
+
+    const updateCamera = () => {
+        camera.position.set(
+            target.x + spherical.r * Math.sin(spherical.phi) * Math.sin(spherical.theta),
+            target.y + spherical.r * Math.cos(spherical.phi),
+            target.z + spherical.r * Math.sin(spherical.phi) * Math.cos(spherical.theta)
+        );
+        camera.lookAt(target);
+    };
+    updateCamera();
+
+    canvas.addEventListener('mousedown', e => {
+        isDragging = true; isRightDrag = e.button === 2;
+        prevMouse = { x: e.clientX, y: e.clientY };
+    });
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+    window.addEventListener('mouseup', () => isDragging = false);
+    window.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const dx = e.clientX - prevMouse.x;
+        const dy = e.clientY - prevMouse.y;
+        prevMouse = { x: e.clientX, y: e.clientY };
+        if (isRightDrag) {
+            const right = new THREE.Vector3();
+            const up    = new THREE.Vector3();
+            camera.getWorldDirection(right); right.cross(camera.up).normalize();
+            up.copy(camera.up);
+            target.addScaledVector(right, -dx * 0.3);
+            target.addScaledVector(up,    dy * 0.3);
+        } else {
+            spherical.theta -= dx * 0.008;
+            spherical.phi    = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi - dy * 0.008));
+        }
+        updateCamera();
+    });
+    // passive: false so we can preventDefault and stop page scroll
+    canvas.addEventListener('wheel', e => {
+        e.preventDefault();
+        spherical.r = Math.max(50, spherical.r + e.deltaY * 0.4);
+        updateCamera();
+    }, { passive: false });
+
+    // Home button overlay
+    const homeBtn = document.createElement('button');
+    homeBtn.id = 'topo-3d-home';
+    homeBtn.innerHTML = '⌂';
+    homeBtn.title = 'Reset view';
+    homeBtn.addEventListener('click', () => {
+        spherical.theta = Math.PI / 6;
+        spherical.phi   = Math.PI / 3;
+        const packDiag  = Math.sqrt(Math.pow(
+            (parseInt(document.getElementById('p-series')?.value)||1) * ((CELL_FORMS[document.getElementById('p-cell-form')?.value||'21700'].dia) + (parseFloat(document.getElementById('p-gap-x')?.value)||0)), 2) +
+            Math.pow((parseInt(document.getElementById('p-parallel')?.value)||1) * ((CELL_FORMS[document.getElementById('p-cell-form')?.value||'21700'].dia) + (parseFloat(document.getElementById('p-gap-y')?.value)||0)), 2));
+        spherical.r = packDiag * 1.6 + (CELL_FORMS[document.getElementById('p-cell-form')?.value||'21700'].length);
+        target.set(0, 0, 0);
+        updateCamera();
+    });
+    wrap.style.position = 'relative';
+    wrap.appendChild(homeBtn);
+
+    // Ambient + directional light
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const dirL = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirL.position.set(1, 2, 1.5);
+    scene.add(dirL);
+
+    _3d = { renderer, scene, camera, updateCamera, spherical, target };
+    rebuild3D();
+
+    renderer.setAnimationLoop(() => renderer.render(scene, camera));
+
+    // Resize
+    window.addEventListener('resize', () => {
+        const W2 = wrap.clientWidth, H2 = wrap.clientHeight;
+        renderer.setSize(W2, H2);
+        camera.aspect = W2 / H2;
+        camera.updateProjectionMatrix();
+    });
+}
+
+function rebuild3D() {
+    if (!_3d) return;
+    const { scene, camera, updateCamera, spherical, target } = _3d;
+
+    // Clear old meshes
+    while (scene.children.length > 0) scene.remove(scene.children[0]);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const dirL = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirL.position.set(1, 2, 1.5); scene.add(dirL);
+
+    // Get params
+    const S        = parseInt(document.getElementById('p-series')?.value)   || 1;
+    const P        = parseInt(document.getElementById('p-parallel')?.value) || 1;
+    const formKey  = document.getElementById('p-cell-form')?.value || '21700';
+    const gapX     = parseFloat(document.getElementById('p-gap-x')?.value) || 0;
+    const gapY     = parseFloat(document.getElementById('p-gap-y')?.value) || 0;
+    const cellForm = CELL_FORMS[formKey];
+
+    const cellR   = cellForm.dia / 2;
+    const cellH   = cellForm.length;
+    const pitchX  = cellForm.dia + gapX;
+    const pitchY  = cellForm.dia + gapY;
+
+    const STRIP_T       = 0.4;   // nickel strip thickness mm
+    const STRIP_W_FRAC  = 0.38;  // strip width as fraction of cell diameter
+    const BRIDGE_T      = 0.4;
+    const PURPLE_OFFSET = 0;           // flush with top face
+    const RED_OFFSET    = STRIP_T + 0.3;   // sits above purple
+    const BLUE_OFFSET   = STRIP_T + 0.3;   // sits below bottom face (proud)
+
+    // Materials
+    const matCell   = new THREE.MeshStandardMaterial({ color: 0x0c0e12, roughness: 0.6, metalness: 0.4 });
+    const matBorder = new THREE.MeshStandardMaterial({ color: 0xee6829, roughness: 0.5, metalness: 0.3, emissive: 0xee6829, emissiveIntensity: 0.12 });
+    const matPos    = new THREE.MeshStandardMaterial({ color: 0xee6829, roughness: 0.4, metalness: 0.5, emissive: 0xee6829, emissiveIntensity: 0.3 });
+    const matNeg    = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.6 });
+    const matPurple = new THREE.MeshStandardMaterial({ color: 0x9b59ff, roughness: 0.3, metalness: 0.7, emissive: 0x9b59ff, emissiveIntensity: 0.15 });
+    const matRed    = new THREE.MeshStandardMaterial({ color: 0xff2244, roughness: 0.3, metalness: 0.7, emissive: 0xff2244, emissiveIntensity: 0.2 });
+    const matBlue   = new THREE.MeshStandardMaterial({ color: 0x00aaff, roughness: 0.3, metalness: 0.7, emissive: 0x00aaff, emissiveIntensity: 0.2 });
+
+    const geoCell     = new THREE.CylinderGeometry(cellR, cellR, cellH - 2, 32);
+    const geoCap      = new THREE.CylinderGeometry(cellR * 0.98, cellR * 0.98, 1, 32);
+    const geoPosCap   = new THREE.CylinderGeometry(cellR * 0.65, cellR * 0.65, 1.2, 32);
+    const geoNegCap   = new THREE.CylinderGeometry(cellR * 0.80, cellR * 0.80, 1.2, 32);
+
+    const STRIP_W = cellForm.dia * STRIP_W_FRAC;
+
+    // Pack center offset so pack is centered at origin
+    const packCX = (S - 1) * pitchX / 2;
+    const packCY = (P - 1) * pitchY / 2;
+
+    for (let s = 0; s < S; s++) {
+        for (let p = 0; p < P; p++) {
+            const x = s * pitchX - packCX;
+            const z = p * pitchY - packCY;
+            const posOnTop = (s % 2 !== 0); // matches 2D logic
+
+            // Cell body
+            const cell = new THREE.Mesh(geoCell, matCell);
+            cell.position.set(x, 0, z);
+            scene.add(cell);
+
+            // Border ring (thin outer cylinder slightly larger)
+            const border = new THREE.Mesh(
+                new THREE.CylinderGeometry(cellR + 0.3, cellR + 0.3, cellH - 2, 32, 1, true),
+                matBorder
+            );
+            border.position.set(x, 0, z);
+            scene.add(border);
+
+            // Bottom cap (flat)
+            const botCap = new THREE.Mesh(geoCap, matCell);
+            botCap.position.set(x, -(cellH / 2 - 0.5), z);
+            scene.add(botCap);
+
+            // Top/bottom tab caps
+            if (posOnTop) {
+                // Positive nub on top
+                const posCap = new THREE.Mesh(geoPosCap, matPos);
+                posCap.position.set(x, cellH / 2 + 0.2, z);
+                scene.add(posCap);
+                // Negative flat on bottom
+                const negCap = new THREE.Mesh(geoNegCap, matNeg);
+                negCap.position.set(x, -(cellH / 2 + 0.2), z);
+                scene.add(negCap);
+            } else {
+                // Negative flat on top
+                const negCap = new THREE.Mesh(geoNegCap, matNeg);
+                negCap.position.set(x, cellH / 2 + 0.2, z);
+                scene.add(negCap);
+                // Positive nub on bottom
+                const posCap = new THREE.Mesh(geoPosCap, matPos);
+                posCap.position.set(x, -(cellH / 2 + 0.2), z);
+                scene.add(posCap);
+            }
+        }
+    }
+
+    // --- STRIPS ---
+    // Purple: vertical bar (along Z = parallel direction) through all P cells per column
+    // Placed on TOP face, centered on column X
+    const purpleH = (P - 1) * pitchY + cellForm.dia; // full span
+    const geoPurple = new THREE.BoxGeometry(STRIP_W, STRIP_T, purpleH);
+
+    for (let s = 0; s < S; s++) {
+        const x = s * pitchX - packCX;
+        const stripY = cellH / 2 + PURPLE_OFFSET + STRIP_T / 2;
+        const mesh = new THREE.Mesh(geoPurple, matPurple);
+        mesh.position.set(x, stripY, 0);
+        scene.add(mesh);
+
+        // Also on bottom face (purple = both sides)
+        const meshBot = new THREE.Mesh(geoPurple, matPurple);
+        meshBot.position.set(x, -(cellH / 2 + PURPLE_OFFSET + STRIP_T / 2), 0);
+        scene.add(meshBot);
+    }
+
+    // Red/Blue bridges between adjacent columns
+    // Red = top face, Blue = bottom face
+    // s even→odd: red on top; s odd→even: blue on bottom (matches 2D)
+    for (let s = 0; s < S - 1; s++) {
+        const x1 = s * pitchX - packCX;
+        const x2 = (s + 1) * pitchX - packCX;
+        const bridgeLen = x2 - x1 - STRIP_W + 0.5; // gap between purple strips
+        const bridgeX   = (x1 + x2) / 2;
+        const isTop = (s % 2 !== 0); // matches 2D flip
+
+        for (let p = 0; p < P; p++) {
+            const z = p * pitchY - packCY;
+            const geoBridge = new THREE.BoxGeometry(bridgeLen, BRIDGE_T, STRIP_W);
+
+            if (isTop) {
+                // Red on top, above purple
+                const m = new THREE.Mesh(geoBridge, matRed);
+                m.position.set(bridgeX, cellH / 2 + PURPLE_OFFSET + STRIP_T + RED_OFFSET + BRIDGE_T / 2, z);
+                scene.add(m);
+            } else {
+                // Blue on bottom, below purple
+                const m = new THREE.Mesh(geoBridge, matBlue);
+                m.position.set(bridgeX, -(cellH / 2 + PURPLE_OFFSET + STRIP_T + BLUE_OFFSET + BRIDGE_T / 2), z);
+                scene.add(m);
+            }
+        }
+    }
+
+    // --- TERMINAL WIRES ---
+    const WIRE_R   = cellForm.dia * 0.06;
+    const WIRE_LEN = cellH * 0.55;
+    const geoWire  = new THREE.CylinderGeometry(WIRE_R, WIRE_R, WIRE_LEN, 12);
+    const matWireRed   = new THREE.MeshStandardMaterial({ color: 0xff2244, roughness: 0.4, metalness: 0.6, emissive: 0xff2244, emissiveIntensity: 0.3 });
+    const matWireBlack = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.5, metalness: 0.5 });
+
+    // B- (C1, s=0) — black wire, exits top face (neg tab faces up for s=0)
+    const wireNeg = new THREE.Mesh(geoWire, matWireBlack);
+    wireNeg.position.set(
+        0 * pitchX - packCX,
+        cellH / 2 + STRIP_T * 2 + WIRE_LEN / 2 + 2,
+        0 * pitchY - packCY   // first cell row
+    );
+    scene.add(wireNeg);
+
+    // B+ (Clast, s=S-1) — red wire, exits top face (pos tab faces up for last odd group)
+    const wirePosX = (S - 1) * pitchX - packCX;
+    const wirePos = new THREE.Mesh(geoWire, matWireRed);
+    wirePos.position.set(
+        wirePosX,
+        cellH / 2 + STRIP_T * 2 + WIRE_LEN / 2 + 2,
+        0 * pitchY - packCY
+    );
+    scene.add(wirePos);
+
+    // Refit camera to pack size
+    const packDiag = Math.sqrt(Math.pow(S * pitchX, 2) + Math.pow(P * pitchY, 2));
+    spherical.r = packDiag * 1.6 + cellH;
+    target.set(0, 0, 0);
+    updateCamera();
+}
+
 window.onload = () => {
     updateTab1();
     updateTab2();
-    updateTopologyViz(); 
+    updateTopologyViz();
 };

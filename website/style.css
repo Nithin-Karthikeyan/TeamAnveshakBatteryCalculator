@@ -271,8 +271,38 @@ input:focus, select:focus {
   width: 20px; height: 8px; border-radius: 2px; display: inline-block;
 }
 
-.topology-svg-wrap {
+.card-title-row {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;
+}
+.card-title-row .card-title { margin-bottom: 0; }
+
+.view-toggle { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 3px; overflow: hidden; }
+.view-btn {
+  background: none; border: none; color: var(--text-dim);
+  font-family: var(--mono); font-size: 12px; font-weight: 800;
+  padding: 6px 16px; cursor: pointer; transition: all 0.2s;
+  letter-spacing: 1px;
+}
+.view-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+.view-btn.active { background: rgba(255,51,0,0.15); color: var(--accent); }
+
+.topology-3d-wrap {
   background: rgba(0,0,0,0.4); border: 1px solid var(--border);
+  border-radius: 3px; overflow: hidden; width: 100%; height: 480px; position: relative;
+}
+
+#topo-3d-home {
+  position: absolute; top: 10px; right: 10px; z-index: 10;
+  background: rgba(3,3,5,0.85); border: 1px solid var(--border);
+  color: var(--accent-silver); font-size: 16px; width: 32px; height: 32px;
+  border-radius: 3px; cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#topo-3d-home:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 8px var(--accent-glow); }
+#topology-3d-canvas { width: 100% !important; height: 100% !important; display: block; }
+
+.topology-svg-wrap {
   border-radius: 3px; padding: 16px; overflow: auto;
   min-height: 300px; display: flex; align-items: center; justify-content: center;
 }
