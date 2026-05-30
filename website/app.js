@@ -467,6 +467,82 @@ function updateTab3() {
     if (lblTotal) lblTotal.textContent = `Total: ${fmt(E_total, 1)} Wh`;
     const barPct = document.getElementById('bar-pct');
     if (barPct) barPct.textContent = fmt(pct, 1) + '% usable';
+
+    // Pass usable energy to power budget calc
+    updatePowerBudget(E_usable);
+}
+
+// --- POWER BUDGET ---
+let _lastUsableWh = 0;  // cached from last updateTab3 call
+
+function addPowerRow() {
+    const tbody = document.getElementById('power-table-body');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.className = 'power-row';
+    tr.innerHTML = `
+        <td><input type="text"   class="power-name"  placeholder="Component name" oninput="updatePowerBudget()"></td>
+        <td><input type="number" class="power-watts" placeholder="0" min="0" step="0.1" oninput="updatePowerBudget()"></td>
+        <td><button class="power-del-btn" onclick="delPowerRow(this)">✕</button></td>`;
+    tbody.appendChild(tr);
+}
+
+function delPowerRow(btn) {
+    const tbody = document.getElementById('power-table-body');
+    if (!tbody) return;
+    if (tbody.rows.length <= 1) {
+        // Clear the last row instead of deleting it
+        const row = tbody.rows[0];
+        row.querySelector('.power-name').value  = '';
+        row.querySelector('.power-watts').value = '';
+    } else {
+        btn.closest('tr').remove();
+    }
+    updatePowerBudget();
+}
+
+function updatePowerBudget(usableWh) {
+    if (usableWh !== undefined) _lastUsableWh = usableWh;
+
+    const rows  = document.querySelectorAll('#power-table-body .power-row');
+    let totalW  = 0;
+    rows.forEach(row => {
+        const w = parseFloat(row.querySelector('.power-watts')?.value) || 0;
+        totalW += w;
+    });
+
+    // Update inline total in input card
+    const inlineTotal = document.getElementById('p-out-total-power');
+    if (inlineTotal) inlineTotal.textContent = totalW > 0 ? `${fmt(totalW, 1)} W` : '— W';
+
+    // Update output card
+    const totalOut = document.getElementById('p-out-total-power-out');
+    if (totalOut) { totalOut.textContent = totalW > 0 ? fmt(totalW, 1) : '—'; totalOut.style.color = ''; }
+
+    const runtimeEl   = document.getElementById('p-out-runtime');
+    const runtimeUnit = document.getElementById('runtime-unit');
+    const unitLabel   = document.getElementById('p-out-runtime-unit');
+
+    if (!runtimeEl || !runtimeUnit) return;
+
+    if (totalW <= 0 || _lastUsableWh <= 0) {
+        runtimeEl.textContent = '—';
+        runtimeEl.style.color = 'var(--danger)';
+        return;
+    }
+
+    const runtimeHr = _lastUsableWh / totalW;
+    runtimeEl.style.color = '';
+    const unit = runtimeUnit.value;
+    if (unitLabel) unitLabel.textContent = unit;
+    runtimeEl.textContent = unit === 'hr'
+        ? fmt(runtimeHr, 2)
+        : fmt(runtimeHr * 60, 1);
+}
+
+function convertRuntime() {
+    // Just reformat with cached value — no recalc needed
+    updatePowerBudget();
 }
 
 function switchTab(idx) {

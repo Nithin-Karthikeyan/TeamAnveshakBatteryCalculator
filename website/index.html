@@ -414,6 +414,33 @@
             </div>
           </div>
         </div>
+
+        <div class="card input-card">
+          <div class="card-title">// Power Budget</div>
+          <div class="power-table-wrap">
+            <table class="power-table" id="power-table">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th>Power (W)</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="power-table-body">
+                <tr class="power-row">
+                  <td><input type="text"   class="power-name" placeholder="e.g. Motor Controller" oninput="updatePowerBudget()"></td>
+                  <td><input type="number" class="power-watts" placeholder="0" min="0" step="0.1" oninput="updatePowerBudget()"></td>
+                  <td><button class="power-del-btn" onclick="delPowerRow(this)">✕</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <button class="power-add-btn" onclick="addPowerRow()">+ Add Component</button>
+          <div class="power-total-row">
+            <span class="res-label">Total Power Draw</span>
+            <span class="res-value" id="p-out-total-power">— W</span>
+          </div>
+        </div>
       </section>
 
       <section class="column output-column">
@@ -501,6 +528,28 @@
             <div class="energy-bar-label" style="margin-top:8px;">
               <span style="color:var(--text-dim);">Total capacity</span>
               <span style="color:var(--accent-blue);" id="bar-pct">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-title-row">
+            <span class="card-title">// Runtime Estimate</span>
+            <select id="runtime-unit" onchange="convertRuntime()" class="runtime-unit-select">
+              <option value="hr">hr</option>
+              <option value="min">min</option>
+            </select>
+          </div>
+          <div class="output-grid">
+            <div class="metric-card">
+              <div class="metric-label">Total Power Draw</div>
+              <div class="metric-value" id="p-out-total-power-out">—</div>
+              <div class="metric-unit">W</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Est. Runtime</div>
+              <div class="metric-value green" id="p-out-runtime">—</div>
+              <div class="metric-unit" id="p-out-runtime-unit">hr</div>
             </div>
           </div>
         </div>
