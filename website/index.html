@@ -44,7 +44,7 @@
           <div class="field-group">
             <label class="field-label">Ambient Temp (T_amb)</label>
             <div class="field-wrap">
-              <input type="number" id="t1-ambient" value="25" oninput="updateTab1()">
+              <input type="text" id="t1-ambient" value="25" oninput="updateTab1()">
               <span class="field-unit">°C</span>
             </div>
           </div>
@@ -71,7 +71,7 @@
           <div class="field-group">
             <label class="field-label">Thickness</label>
             <div class="input-unit-wrap">
-              <input type="number" id="t1-thickness" value="0.15" step="0.01" oninput="updateTab1()">
+              <input type="text" id="t1-thickness" value="0.15" oninput="updateTab1()">
               <select id="t1-t-unit" onchange="updateTab1()">
                 <option value="1">mm</option>
                 <option value="10">cm</option>
@@ -82,7 +82,7 @@
           <div class="field-group">
             <label class="field-label">Width</label>
             <div class="input-unit-wrap">
-              <input type="number" id="t1-width" value="10" step="1" oninput="updateTab1()">
+              <input type="text" id="t1-width" value="10" oninput="updateTab1()">
               <select id="t1-w-unit" onchange="updateTab1()">
                 <option value="1">mm</option>
                 <option value="10">cm</option>
@@ -93,7 +93,7 @@
           <div class="field-group">
             <label class="field-label">Length</label>
             <div class="input-unit-wrap">
-              <input type="number" id="t1-length" value="30" step="1" oninput="updateTab1()">
+              <input type="text" id="t1-length" value="30" oninput="updateTab1()">
               <select id="t1-l-unit" onchange="updateTab1()">
                 <option value="1">mm</option>
                 <option value="10">cm</option>
@@ -107,16 +107,16 @@
           <div class="card-title">// Operating Conditions</div>
           <div class="field-group">
             <label class="field-label">Current</label>
-            <div class="field-wrap"><input type="number" id="t1-current" value="35" oninput="updateTab1()"><span class="field-unit">A</span></div>
+            <div class="field-wrap"><input type="text" id="t1-current" value="35" oninput="updateTab1()"><span class="field-unit">A</span></div>
           </div>
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Strips (P)</label>
-              <div class="field-wrap"><input type="number" id="t1-strips" value="1" min="1" oninput="updateTab1()"><span class="field-unit">×</span></div>
+              <div class="field-wrap"><input type="text" id="t1-strips" value="1" oninput="updateTab1()"><span class="field-unit">×</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Thermal Limit</label>
-              <div class="field-wrap"><input type="number" id="t1-maxtemp" value="65" oninput="updateTab1()"><span class="field-unit">°C</span></div>
+              <div class="field-wrap"><input type="text" id="t1-maxtemp" value="65" oninput="updateTab1()"><span class="field-unit">°C</span></div>
             </div>
           </div>
         </div>
@@ -202,7 +202,7 @@
           <div class="field-group">
             <label class="field-label">Ambient Temp (T_amb)</label>
             <div class="field-wrap">
-              <input type="number" id="t2-ambient" value="40" oninput="updateTab2()">
+              <input type="text" id="t2-ambient" value="40" oninput="updateTab2()">
               <span class="field-unit">°C</span>
             </div>
           </div>
@@ -229,7 +229,7 @@
           <div class="field-group">
             <label class="field-label">Thickness (Fixed)</label>
             <div class="input-unit-wrap">
-              <input type="number" id="t2-thickness" value="0.15" step="0.01" oninput="updateTab2()">
+              <input type="text" id="t2-thickness" value="0.15" oninput="updateTab2()">
               <select id="t2-t-unit" onchange="updateTab2()">
                 <option value="1">mm</option>
                 <option value="10">cm</option>
@@ -240,7 +240,7 @@
           <div class="field-group">
             <label class="field-label">Length</label>
             <div class="input-unit-wrap">
-              <input type="number" id="t2-length" value="30" step="1" oninput="updateTab2()">
+              <input type="text" id="t2-length" value="30" oninput="updateTab2()">
               <select id="t2-l-unit" onchange="updateTab2()">
                 <option value="1">mm</option>
                 <option value="10">cm</option>
@@ -254,16 +254,16 @@
           <div class="card-title">// Operating Requirements</div>
           <div class="field-group">
             <label class="field-label">Required Current</label>
-            <div class="field-wrap"><input type="number" id="t2-current" value="100" oninput="updateTab2()"><span class="field-unit">A</span></div>
+            <div class="field-wrap"><input type="text" id="t2-current" value="100" oninput="updateTab2()"><span class="field-unit">A</span></div>
           </div>
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Strips (P)</label>
-              <div class="field-wrap"><input type="number" id="t2-strips" value="1" min="1" oninput="updateTab2()"><span class="field-unit">×</span></div>
+              <div class="field-wrap"><input type="text" id="t2-strips" value="1" oninput="updateTab2()"><span class="field-unit">×</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Max Allowed Temp</label>
-              <div class="field-wrap"><input type="number" id="t2-maxtemp" value="60" oninput="updateTab2()"><span class="field-unit">°C</span></div>
+              <div class="field-wrap"><input type="text" id="t2-maxtemp" value="60" oninput="updateTab2()"><span class="field-unit">°C</span></div>
             </div>
           </div>
         </div>
@@ -334,23 +334,18 @@
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Nominal Voltage</label>
-              <div class="field-wrap"><input type="number" id="p-vnom" value="3.7" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
+              <div class="field-wrap"><input type="text" id="p-vnom" value="3.7" oninput="updateTab3()"><span class="field-unit">V</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Cell Capacity</label>
-              <div class="field-wrap"><input type="number" id="p-cap" value="4.2" step="0.1" oninput="updateTab3()"><span class="field-unit">Ah</span></div>
+              <div class="field-wrap"><input type="text" id="p-cap" value="4.2" oninput="updateTab3()"><span class="field-unit">Ah</span></div>
             </div>
           </div>
-          <div class="field-row">
-            <div class="field-group">
-              <label class="field-label">Max Voltage</label>
-              <div class="field-wrap"><input type="number" id="p-vmax" value="4.2" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
-            </div>
-            <div class="field-group">
-              <label class="field-label">Min Voltage</label>
-              <div class="field-wrap"><input type="number" id="p-vmin" value="3.6" step="0.01" oninput="updateTab3()"><span class="field-unit">V</span></div>
-            </div>
+          <div class="field-group">
+            <label class="field-label">Max Voltage</label>
+            <div class="field-wrap"><input type="text" id="p-vmax" value="4.2" oninput="updateTab3()"><span class="field-unit">V</span></div>
           </div>
+          <div class="field-hint">Note: Most Li-Ion and LiPo cells deliver ~90% of their energy above 3.3V. Stopping discharge at this point significantly extends cell life.</div>
         </div>
 
         <div class="card input-card">
@@ -358,11 +353,11 @@
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Series (S)</label>
-              <div class="field-wrap"><input type="number" id="p-series" value="6" min="1" oninput="updateTopologyViz()"><span class="field-unit">S</span></div>
+              <div class="field-wrap"><input type="text" id="p-series" value="6" oninput="updateTopologyViz()"><span class="field-unit">S</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Parallel (P)</label>
-              <div class="field-wrap"><input type="number" id="p-parallel" value="8" min="1" oninput="updateTopologyViz()"><span class="field-unit">P</span></div>
+              <div class="field-wrap"><input type="text" id="p-parallel" value="8" oninput="updateTopologyViz()"><span class="field-unit">P</span></div>
             </div>
           </div>
         </div>
@@ -379,11 +374,11 @@
           <div class="field-row">
             <div class="field-group">
               <label class="field-label">Gap X (between cols)</label>
-              <div class="field-wrap"><input type="number" id="p-gap-x" value="3" min="0" step="0.5" oninput="updateTopologyViz()"><span class="field-unit">mm</span></div>
+              <div class="field-wrap"><input type="text" id="p-gap-x" value="3" oninput="updateTopologyViz()"><span class="field-unit">mm</span></div>
             </div>
             <div class="field-group">
               <label class="field-label">Gap Y (between rows)</label>
-              <div class="field-wrap"><input type="number" id="p-gap-y" value="3" min="0" step="0.5" oninput="updateTopologyViz()"><span class="field-unit">mm</span></div>
+              <div class="field-wrap"><input type="text" id="p-gap-y" value="3" oninput="updateTopologyViz()"><span class="field-unit">mm</span></div>
             </div>
           </div>
           <div class="field-hint">Gap = cell holder wall thickness / spacing between cell centers minus cell diameter</div>
@@ -429,7 +424,7 @@
               <tbody id="power-table-body">
                 <tr class="power-row">
                   <td><input type="text"   class="power-name" placeholder="e.g. Motor Controller" oninput="updatePowerBudget()"></td>
-                  <td><input type="number" class="power-watts" placeholder="0" min="0" step="0.1" oninput="updatePowerBudget()"></td>
+                  <td><input type="text" class="power-watts" placeholder="0" oninput="updatePowerBudget()"></td>
                   <td><button class="power-del-btn" onclick="delPowerRow(this)">✕</button></td>
                 </tr>
               </tbody>
@@ -481,53 +476,19 @@
               <div class="metric-unit">V</div>
             </div>
             <div class="metric-card">
-              <div class="metric-label">Pack Capacity</div>
-              <div class="metric-value" id="p-out-cap">—</div>
-              <div class="metric-unit">Ah</div>
-            </div>
-            <div class="metric-card">
               <div class="metric-label">Pack Max</div>
               <div class="metric-value" id="p-out-vmax">—</div>
               <div class="metric-unit">V</div>
             </div>
             <div class="metric-card">
-              <div class="metric-label">Pack Min</div>
-              <div class="metric-value thermal" id="p-out-vmin">—</div>
-              <div class="metric-unit">V</div>
+              <div class="metric-label">Pack Capacity</div>
+              <div class="metric-value" id="p-out-cap">—</div>
+              <div class="metric-unit">Ah</div>
             </div>
-          </div>
-        </div>
-
-        <div class="card output-card">
-          <div class="card-title">// Energy Overview</div>
-          <div class="output-grid">
             <div class="metric-card">
               <div class="metric-label">Total Energy</div>
               <div class="metric-value green" id="p-out-etotal">—</div>
               <div class="metric-unit">Wh</div>
-            </div>
-            <div class="metric-card">
-              <div class="metric-label">Usable Energy</div>
-              <div class="metric-value highlight-tf" style="font-size: 32px;" id="p-out-eusable">—</div>
-              <div class="metric-unit">Wh</div>
-            </div>
-          </div>
-
-          <div class="energy-bar-wrap" id="energy-bar-wrap">
-            <div class="energy-bar-label">
-              <span>0 Wh</span>
-              <span id="bar-label-usable">Usable</span>
-              <span id="bar-label-total">Total</span>
-            </div>
-            <div class="energy-bar" style="margin-bottom:8px;">
-              <div class="energy-fill" id="bar-total" style="width:100%;"></div>
-            </div>
-            <div class="energy-bar">
-              <div class="energy-fill usable" id="bar-usable"></div>
-            </div>
-            <div class="energy-bar-label" style="margin-top:8px;">
-              <span style="color:var(--text-dim);">Total capacity</span>
-              <span style="color:var(--accent-blue);" id="bar-pct">—</span>
             </div>
           </div>
         </div>

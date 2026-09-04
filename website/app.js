@@ -419,7 +419,6 @@ function updateTopologyViz() {
 function updateTab3() {
     const vmax = parseFloat(document.getElementById('p-vmax')?.value) || 0;
     const vnom = parseFloat(document.getElementById('p-vnom')?.value) || 0;
-    const vmin = parseFloat(document.getElementById('p-vmin')?.value) || 0;
     const cap  = parseFloat(document.getElementById('p-cap')?.value)  || 0;
     const S    = parseInt(document.getElementById('p-series')?.value)   || 0;
     const P    = parseInt(document.getElementById('p-parallel')?.value) || 0;
@@ -434,9 +433,9 @@ function updateTab3() {
     };
 
     // Validate
-    const invalid = vnom <= 0 || cap <= 0 || S <= 0 || P <= 0 || vmax <= 0 || vmin <= 0 || vmax <= vmin;
+    const invalid = vnom <= 0 || cap <= 0 || S <= 0 || P <= 0 || vmax <= 0 || vmax <= vnom;
     if (invalid) {
-        ['p-out-vnom','p-out-vmax','p-out-vmin','p-out-cap','p-out-etotal','p-out-eusable'].forEach(dash);
+        ['p-out-vnom','p-out-vmax','p-out-cap','p-out-etotal'].forEach(dash);
         const wrap = document.getElementById('energy-bar-wrap');
         if (wrap) wrap.style.display = 'none';
         return;
@@ -444,36 +443,31 @@ function updateTab3() {
 
     const pack_vnom = vnom * S;
     const pack_vmax = vmax * S;
-    const pack_vmin = vmin * S;
     const pack_cap  = cap * P;
     const E_total   = pack_vnom * pack_cap;
-    const E_usable  = (vmax - vmin) * cap * P * S;
-    const pct       = E_total > 0 ? (E_usable / E_total) * 100 : 0;
 
     setVal('p-out-vnom', pack_vnom, 2);
     setVal('p-out-vmax', pack_vmax, 2);
-    setVal('p-out-vmin', pack_vmin, 2);
     setVal('p-out-cap',  pack_cap,  2);
     setVal('p-out-etotal',  E_total,  1);
-    setVal('p-out-eusable', E_usable, 1);
 
     const wrap = document.getElementById('energy-bar-wrap');
     if (wrap) wrap.style.display = 'block';
     const barUsable = document.getElementById('bar-usable');
-    if (barUsable) barUsable.style.width = pct + '%';
+    if (barUsable) barUsable.style.width = '100%';
     const lblUsable = document.getElementById('bar-label-usable');
-    if (lblUsable) lblUsable.textContent = `Usable: ${fmt(E_usable, 1)} Wh`;
+    if (lblUsable) lblUsable.textContent = `Total: ${fmt(E_total, 1)} Wh`;
     const lblTotal = document.getElementById('bar-label-total');
     if (lblTotal) lblTotal.textContent = `Total: ${fmt(E_total, 1)} Wh`;
     const barPct = document.getElementById('bar-pct');
-    if (barPct) barPct.textContent = fmt(pct, 1) + '% usable';
+    if (barPct) barPct.textContent = '100%';
 
-    // Pass usable energy to power budget calc
-    updatePowerBudget(E_usable);
+    // Pass total energy to power budget calc
+    updatePowerBudget(E_total);
 }
 
 // --- POWER BUDGET ---
-let _lastUsableWh = 0;  // cached from last updateTab3 call
+let _lastTotalWh = 0;  // cached from last updateTab3 call
 
 function addPowerRow() {
     const tbody = document.getElementById('power-table-body');
@@ -482,7 +476,7 @@ function addPowerRow() {
     tr.className = 'power-row';
     tr.innerHTML = `
         <td><input type="text"   class="power-name"  placeholder="Component name" oninput="updatePowerBudget()"></td>
-        <td><input type="number" class="power-watts" placeholder="0" min="0" step="0.1" oninput="updatePowerBudget()"></td>
+        <td><input type="text" class="power-watts" placeholder="0" oninput="updatePowerBudget()"></td>
         <td><button class="power-del-btn" onclick="delPowerRow(this)">✕</button></td>`;
     tbody.appendChild(tr);
 }
@@ -501,8 +495,8 @@ function delPowerRow(btn) {
     updatePowerBudget();
 }
 
-function updatePowerBudget(usableWh) {
-    if (usableWh !== undefined) _lastUsableWh = usableWh;
+function updatePowerBudget(totalWh) {
+    if (totalWh !== undefined) _lastTotalWh = totalWh;
 
     const rows  = document.querySelectorAll('#power-table-body .power-row');
     let totalW  = 0;
@@ -525,13 +519,13 @@ function updatePowerBudget(usableWh) {
 
     if (!runtimeEl || !runtimeUnit) return;
 
-    if (totalW <= 0 || _lastUsableWh <= 0) {
+    if (totalW <= 0 || _lastTotalWh <= 0) {
         runtimeEl.textContent = '—';
         runtimeEl.style.color = 'var(--danger)';
         return;
     }
 
-    const runtimeHr = _lastUsableWh / totalW;
+    const runtimeHr = _lastTotalWh / totalW;
     runtimeEl.style.color = '';
     const unit = runtimeUnit.value;
     if (unitLabel) unitLabel.textContent = unit;
